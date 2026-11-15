@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "intellimeet"
+version = "0.1.0"
+description = "IntelliMeet: an AI meeting bot that joins Google Meet, records audio, transcribes it and produces summaries, key points, action items and sentiment."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "IntelliMeet Team" }]
+dependencies = [
+    "selenium>=4.15",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12",
+    "numpy>=1.24",
+    "python-dotenv>=1.0",
+    "openai>=1.30",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "python-multipart>=0.0.9",
+    "soundcard>=0.4.3; platform_system != \"Darwin\"",
+    "PyAudioWPatch>=0.2.12; platform_system == \"Windows\"",
+]
+
+[project.optional-dependencies]
+local = ["faster-whisper>=1.0"]
+gemini = ["google-genai>=1.0"]
+dev = ["pytest>=7", "httpx>=0.27"]
+
+[project.scripts]
+intellimeet = "intellimeet.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

@@ -1,0 +1,20 @@
+<!doctype html><html><body>
+<div id="pre">
+  <h1>What's your name?</h1>
+  <input type="text" aria-label="Your name" id="name">
+  <div role="button" jscontroller="t2mBxb" data-anchor-id="hw0c9" id="mic" data-is-muted="false" aria-label="Turn off microphone (ctrl + d)">mic</div>
+  <div role="button" jscontroller="bwqwSd" data-anchor-id="psRWwc" id="cam" data-is-muted="false" aria-label="Turn off camera (ctrl + e)">cam</div>
+  <button jsname="Qx7uuf" id="join" disabled><span>Ask to join</span></button>
+</div>
+<div id="wait" style="display:none">Asking to be let in…</div>
+<div id="call" style="display:none"><button aria-label="Leave call" id="leave">x</button></div>
+<div id="dlg"><button>Got it</button></div>
+<script>
+const $=id=>document.getElementById(id);
+document.querySelector('#dlg button').onclick=()=>$('dlg').remove();
+for (const [id,word] of [['mic','microphone'],['cam','camera']]) $(id).onclick=()=>{const m=$(id).dataset.isMuted==='true';$(id).dataset.isMuted=m?'false':'true';$(id).setAttribute('aria-label',(m?'Turn off ':'Turn on ')+word);};
+$('name').addEventListener('input',()=>$('join').disabled=!$('name').value);
+$('join').onclick=()=>{window.joinedAs=$('name').value;window.micAtJoin=$('mic').dataset.isMuted;window.camAtJoin=$('cam').dataset.isMuted;$('pre').style.display='none';$('wait').style.display='';
+  setTimeout(()=>{$('wait').style.display='none';$('call').style.display='';},3000);
+  setTimeout(()=>{$('call').innerHTML='<h2>You left the meeting</h2><button>Rejoin</button><button>Return to home screen</button>';},12000);};
+</script></body></html>

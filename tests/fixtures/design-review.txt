@@ -1,0 +1,5 @@
+[00:00] Welcome everyone to the design review.
+[00:15] Ayush will send the updated mockups by Friday.
+[00:40] We decided to ship the dark theme first.
+[01:05] The onboarding flow is still confusing for new users, that is a concern.
+[01:30] Shivangi needs to run five user tests next week.

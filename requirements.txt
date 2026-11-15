@@ -1,0 +1,14 @@
+selenium>=4.15
+sounddevice>=0.4.6
+soundfile>=0.12
+numpy>=1.24
+python-dotenv>=1.0
+openai>=1.30
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+soundcard>=0.4.3; platform_system != "Darwin"
+PyAudioWPatch>=0.2.12; platform_system == "Windows"
+# Optional:
+# faster-whisper>=1.0   # local transcription (TRANSCRIBER=local)
+# google-genai>=1.0     # Gemini analysis (ANALYZER=gemini)
