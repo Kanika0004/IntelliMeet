@@ -114,6 +114,7 @@ export interface ChatMessage {
 
 export interface AppConfig {
   version: string;
+  demo?: boolean;
   transcriber: { provider: string; configured: boolean; model: string };
   analyzer: { provider: string; model: string; configured: boolean };
   bot: {

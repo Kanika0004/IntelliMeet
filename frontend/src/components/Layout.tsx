@@ -96,6 +96,7 @@ export function Layout() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const { data: cfg } = useQuery({ queryKey: ["config"], queryFn: api.config, staleTime: Infinity });
   return (
     <div className="min-h-screen">
       {/* Desktop sidebar */}
@@ -146,6 +147,12 @@ export function Layout() {
             </Link>
           </div>
         </header>
+        {cfg?.demo && (
+          <div className="border-b border-amber-300/60 bg-amber-50 px-4 py-2 text-center text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 sm:px-6">
+            Hosted demo: explore the sample meetings, upload a transcript (.txt, .vtt, .srt) and use Ask AI. The Google Meet
+            bot and audio recording run only when IntelliMeet is installed on your own computer.
+          </div>
+        )}
         <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
           <Outlet />
         </main>

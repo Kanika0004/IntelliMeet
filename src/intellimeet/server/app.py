@@ -11,9 +11,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+import re
+
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -47,6 +49,8 @@ async def lifespan(_: FastAPI):
 
     preload()  # soundcard must be imported before COM is touched on Windows
     db.fail_interrupted()
+    if DEMO and not db.list_meeting_rows():
+        sample.seed(db)  # hosted demo starts with the sample meetings
     runner = JobRunner(settings, db)
     bot_login = BotLogin(settings, runner.login_active)
     yield
@@ -59,6 +63,42 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ------------------------------------------------------------------- demo mode
+# DEMO_MODE=true is for a public hosted copy: no bot, no settings changes, no deletes,
+# and uploads limited to small transcript files (a free cloud server has no Chrome
+# profile, no speakers and too little memory for local Whisper).
+DEMO = os.environ.get("DEMO_MODE", "").strip().lower() in {"1", "true", "yes", "on"}
+DEMO_MAX_UPLOAD = 300 * 1024
+DEMO_MSG = "This is the hosted demo of IntelliMeet. {} is available when IntelliMeet runs on your own computer."
+_DEMO_BLOCKED = [
+    ("POST", re.compile(r"^/api/meetings/?$"), "Sending the meeting bot"),
+    ("DELETE", re.compile(r"^/api/meetings/[^/]+$"), "Deleting meetings"),
+    ("POST", re.compile(r"^/api/meetings/[^/]+/stop$"), "Stopping jobs"),
+    ("PUT", re.compile(r"^/api/settings$"), "Changing settings"),
+    ("POST", re.compile(r"^/api/settings/test-ai$"), "Testing the AI connection"),
+    ("POST", re.compile(r"^/api/audio/test$"), "Audio capture"),
+    ("POST", re.compile(r"^/api/bot/"), "Signing in the bot"),
+    ("POST", re.compile(r"^/api/sample$"), "Loading sample data"),
+]
+
+
+@app.middleware("http")
+async def demo_guard(request: Request, call_next):
+    if DEMO:
+        path, method = request.url.path, request.method
+        for m, pat, what in _DEMO_BLOCKED:
+            if method == m and pat.match(path):
+                return JSONResponse({"detail": DEMO_MSG.format(what)}, status_code=403)
+        if method == "POST" and path.endswith("/retry") and request.query_params.get("mode") != "reanalyze":
+            return JSONResponse({"detail": DEMO_MSG.format("Re-joining or re-processing")}, status_code=403)
+        if method == "POST" and path == "/api/meetings/upload":
+            size = int(request.headers.get("content-length") or 0)
+            if size > DEMO_MAX_UPLOAD:
+                return JSONResponse({"detail": "The hosted demo accepts transcript files (.txt, .vtt, .srt) up to 300 KB."},
+                                    status_code=413)
+    return await call_next(request)
 
 
 # ----------------------------------------------------------------- serializers
@@ -118,6 +158,7 @@ def config():
     transcriber = Transcriber(settings)
     return {
         "version": __version__,
+        "demo": DEMO,
         "transcriber": {"provider": transcriber.provider, "configured": transcriber.is_configured(),
                         "model": settings.whisper_model if transcriber.provider == "openai" else settings.local_whisper_model},
         "analyzer": {"provider": analyzer.provider,
@@ -201,6 +242,9 @@ def create_bot_meeting(req: BotRequest):
 async def upload_meeting(file: UploadFile = File(...), title: str = Form(""), analyze: bool = Form(True)):
     name = Path(file.filename or "recording").name
     ext = Path(name).suffix.lower()
+    if DEMO and ext not in TEXT_EXT:
+        raise HTTPException(422, "The hosted demo can't transcribe audio (no Whisper on the free server). "
+                                 "Upload a transcript (.txt, .vtt or .srt) instead.")
     if ext not in AUDIO_EXT | TEXT_EXT:
         raise HTTPException(422, f"Unsupported file type '{ext}'. Upload audio ({', '.join(sorted(AUDIO_EXT))}) or a transcript (.txt, .vtt, .srt).")
     title = title.strip()
