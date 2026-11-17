@@ -1,0 +1,8 @@
+<!doctype html><html><body><div id="pre"><p>Ready to join?</p>
+<button id="mic" aria-label="Turn off microphone"><i>m</i></button><button id="cam" aria-label="Turn off camera"><i>c</i></button>
+<div role="button" id="join"><span><span>Join now</span></span></div></div>
+<div id="call" style="display:none"><div role="button" aria-label="Leave call">x</div></div>
+<script>const $=id=>document.getElementById(id);
+for (const [id,w] of [['mic','microphone'],['cam','camera']]) $(id).onclick=()=>{const on=$(id).getAttribute('aria-label').startsWith('Turn off');$(id).setAttribute('aria-label',(on?'Turn on ':'Turn off ')+w);};
+$('join').onclick=()=>{window.mic=$('mic').getAttribute('aria-label');window.cam=$('cam').getAttribute('aria-label');$('pre').remove();$('call').style.display='';};
+</script></body></html>
